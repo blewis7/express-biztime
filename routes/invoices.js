@@ -3,9 +3,9 @@ const router = new express.Router();
 const ExpressError = require("../expressError");
 const db = require("../db");
 
-router.get("/invoices", async (req, res, next) =>{
+router.get("/", async (req, res, next) =>{
     try {
-        results = await db.query("SELECT id, comp_code FROM invoices");
+        const results = await db.query("SELECT id, comp_code FROM invoices");
         return res.json({"invoices": results.rows});
     } catch (err) {
         return next(err);
@@ -13,7 +13,7 @@ router.get("/invoices", async (req, res, next) =>{
 });
 
 // Get all information from invoice with specific id in params. Connect to companies table.
-router.get("/invoices/:id", async (req, res, next) => {
+router.get("/:id", async (req, res, next) => {
     try {
         let id = req.params.id
         const result = await db.query("SELECT i.id, i.amt, i.add_date, i.paid_date,i.comp_code, c.name, c.description FROM invoices AS i INNER JOIN companies AS c ON (i.comp_code = c.code) WHERE id=$1", [id]);
@@ -30,18 +30,18 @@ router.get("/invoices/:id", async (req, res, next) => {
 });
 
 // Post new invoice into invoices db
-router.post("/invoices", async (req, res, next) => {
+router.post("/", async (req, res, next) => {
     try {
         const {comp_code, amt} = req.body;
         result = await db.query("INSERT INTO invoices (comp_code, amt) VALUES ($1, $2) RETURNING id, comp_code, amt, paid, add_date, paid_date", [comp_code, amt]);
-        return res.json({"invoice": result.rows[0]});
+        return res.status(201).json({"invoice": result.rows[0]});
     } catch (err) {
         return next(err);
     }
 });
 
 // Update invoice
-router.put("/invoices/:id", async (req, res, next) => {
+router.put("/:id", async (req, res, next) => {
     try {
         let {amt, paid} = req.body;
         let id = req.params.id;
@@ -69,7 +69,7 @@ router.put("/invoices/:id", async (req, res, next) => {
 });
 
 // Delete invoice 
-router.delete("/invoices/:id", async (req, res, next) => {
+router.delete("/:id", async (req, res, next) => {
     try {
         let id = req.params.id;
         const result = await db.query("DELETE FROM invoices WHERE id=$1 RETURNING id", [id]);
@@ -82,3 +82,5 @@ router.delete("/invoices/:id", async (req, res, next) => {
         return next(err);
     }
 });
+
+module.exports = router;
